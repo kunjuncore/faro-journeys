@@ -6,8 +6,13 @@ import SearchBar from "@/components/SearchBar";
 import DestinationCard from "@/components/DestinationCard";
 import ActivityCard from "@/components/ActivityCard";
 import HotelCard from "@/components/HotelCard";
+import LoadingCard from "@/components/LoadingCard";
+import ErrorMessage from "@/components/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useDestinations } from "@/hooks/useDestinations";
+import { useHotels } from "@/hooks/useHotels";
+import { useActivities } from "@/hooks/useActivities";
 import heroImage from "@/assets/hero-beach.jpg";
 import santoriniImage from "@/assets/destination-santorini.jpg";
 import baliImage from "@/assets/destination-bali.jpg";
@@ -17,60 +22,96 @@ import divingImage from "@/assets/activity-diving.jpg";
 
 const Index = () => {
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Fetch real data from API
+  const { 
+    destinations: featuredDestinations, 
+    loading: loadingDestinations, 
+    error: errorDestinations 
+  } = useDestinations(true);
+  
+  const { 
+    hotels: topHotels, 
+    loading: loadingHotels, 
+    error: errorHotels 
+  } = useHotels();
+  
+  const { 
+    activities: popularActivities, 
+    loading: loadingActivities, 
+    error: errorActivities 
+  } = useActivities();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  // Mock data - will be replaced with API calls
-  const featuredDestinations = [
+  // Fallback data for when API is unavailable or returns empty
+  const fallbackDestinations = [
     {
-      id: "1",
+      destination_id: "1",
       name: "Santorini",
       location: "Greece",
-      image: santoriniImage,
+      image_url: santoriniImage,
       price: 2499,
       rating: 4.9,
+      description: "",
+      category: "Beach",
+      featured: true,
     },
     {
-      id: "2",
+      destination_id: "2",
       name: "Bali",
       location: "Indonesia",
-      image: baliImage,
+      image_url: baliImage,
       price: 1899,
       rating: 4.8,
+      description: "",
+      category: "Cultural",
+      featured: true,
     },
     {
-      id: "3",
+      destination_id: "3",
       name: "Maldives",
       location: "Indian Ocean",
-      image: maldivesImage,
+      image_url: maldivesImage,
       price: 3499,
       rating: 5.0,
+      description: "",
+      category: "Beach",
+      featured: true,
     },
   ];
 
-  const popularActivities = [
+  const fallbackActivities = [
     {
-      id: "1",
+      activity_id: "1",
       name: "Scuba Diving Adventure",
       category: "Water Sports",
-      image: divingImage,
+      image_url: divingImage,
       price: 199,
       duration: "4 hours",
+      description: "",
+      destination_id: "",
     },
   ];
 
-  const topHotels = [
+  const fallbackHotels = [
     {
-      id: "1",
+      hotel_id: "1",
       name: "Luxury Sky Resort",
-      location: "Dubai, UAE",
-      image: hotelImage,
-      pricePerNight: 450,
+      destination_id: "",
+      description: "",
+      image_url: hotelImage,
+      price_per_night: 450,
       rating: 4.9,
+      amenities: [],
     },
   ];
+
+  const displayDestinations = featuredDestinations.length > 0 ? featuredDestinations : fallbackDestinations;
+  const displayActivities = popularActivities.length > 0 ? popularActivities : fallbackActivities;
+  const displayHotels = topHotels.length > 0 ? topHotels : fallbackHotels;
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,10 +170,30 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredDestinations.map((dest) => (
-            <DestinationCard key={dest.id} {...dest} />
-          ))}
+        {errorDestinations && (
+          <ErrorMessage message={errorDestinations} />
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {loadingDestinations ? (
+            <>
+              <LoadingCard />
+              <LoadingCard />
+              <LoadingCard />
+            </>
+          ) : (
+            displayDestinations.map((dest) => (
+              <DestinationCard 
+                key={dest.destination_id} 
+                id={dest.destination_id}
+                name={dest.name}
+                location={dest.location}
+                image={dest.image_url}
+                price={dest.price}
+                rating={dest.rating}
+              />
+            ))
+          )}
         </div>
       </section>
 
@@ -154,10 +215,30 @@ const Index = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularActivities.map((activity) => (
-              <ActivityCard key={activity.id} {...activity} />
-            ))}
+          {errorActivities && (
+            <ErrorMessage message={errorActivities} />
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {loadingActivities ? (
+              <>
+                <LoadingCard />
+                <LoadingCard />
+                <LoadingCard />
+              </>
+            ) : (
+              displayActivities.map((activity) => (
+                <ActivityCard 
+                  key={activity.activity_id}
+                  id={activity.activity_id}
+                  name={activity.name}
+                  category={activity.category}
+                  image={activity.image_url}
+                  price={activity.price}
+                  duration={activity.duration}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -179,10 +260,30 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {topHotels.map((hotel) => (
-            <HotelCard key={hotel.id} {...hotel} />
-          ))}
+        {errorHotels && (
+          <ErrorMessage message={errorHotels} />
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {loadingHotels ? (
+            <>
+              <LoadingCard />
+              <LoadingCard />
+              <LoadingCard />
+            </>
+          ) : (
+            displayHotels.map((hotel) => (
+              <HotelCard 
+                key={hotel.hotel_id}
+                id={hotel.hotel_id}
+                name={hotel.name}
+                location="Location"
+                image={hotel.image_url}
+                pricePerNight={hotel.price_per_night}
+                rating={hotel.rating}
+              />
+            ))
+          )}
         </div>
       </section>
 

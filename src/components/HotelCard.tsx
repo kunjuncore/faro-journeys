@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import LazyImage from "@/components/LazyImage";
 
 interface HotelCardProps {
   id: string;
@@ -16,7 +17,7 @@ const HotelCard = ({ id, name, location, image, pricePerNight, rating }: HotelCa
   return (
     <Card className="group overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1 border-border">
       <div className="relative overflow-hidden aspect-[4/3]">
-        <img
+        <LazyImage
           src={image}
           alt={name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

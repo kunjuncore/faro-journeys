@@ -120,4 +120,16 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Mobile-first optimizations */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+  
+  /* Touch optimization for mobile */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
 }

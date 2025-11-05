@@ -20,19 +20,25 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors">
-              Home
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/destinations" className="text-foreground hover:text-primary transition-colors font-medium">
+              Destinations
             </Link>
-            <Link to="/explore" className="text-foreground hover:text-primary transition-colors">
-              Explore
+            <Link to="/hotels" className="text-foreground hover:text-primary transition-colors font-medium">
+              Hotels
             </Link>
-            <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
-              Contact
+            <Link to="/activities" className="text-foreground hover:text-primary transition-colors font-medium">
+              Activities
             </Link>
-            <Button asChild className="bg-gradient-to-r from-primary to-accent hover:shadow-lg transition-all">
-              <Link to="/explore">Book Now</Link>
-            </Button>
+            <Link to="/themes" className="text-foreground hover:text-primary transition-colors font-medium">
+              Travel Themes
+            </Link>
+            <Link to="/reviews" className="text-foreground hover:text-primary transition-colors font-medium">
+              Reviews
+            </Link>
+            <Link to="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
+              Contact Us
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -50,31 +56,47 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-3 animate-fade-in">
             <Link
-              to="/"
+              to="/destinations"
               className="block py-2 text-foreground hover:text-primary transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Home
+              Destinations
             </Link>
             <Link
-              to="/explore"
+              to="/hotels"
               className="block py-2 text-foreground hover:text-primary transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Explore
+              Hotels
+            </Link>
+            <Link
+              to="/activities"
+              className="block py-2 text-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Activities
+            </Link>
+            <Link
+              to="/themes"
+              className="block py-2 text-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Travel Themes
+            </Link>
+            <Link
+              to="/reviews"
+              className="block py-2 text-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Reviews
             </Link>
             <Link
               to="/contact"
               className="block py-2 text-foreground hover:text-primary transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Contact
+              Contact Us
             </Link>
-            <Button asChild className="w-full bg-gradient-to-r from-primary to-accent">
-              <Link to="/explore" onClick={() => setMobileMenuOpen(false)}>
-                Book Now
-              </Link>
-            </Button>
           </div>
         )}
       </div>

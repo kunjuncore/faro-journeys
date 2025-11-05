@@ -1,59 +1,123 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HotelCard from "@/components/HotelCard";
 import ActivityCard from "@/components/ActivityCard";
+import BookingModal from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Star, Calendar, Users, ArrowLeft } from "lucide-react";
+import { getHotelsFromSupabase, getActivitiesFromSupabase, getDestinationsFromSupabase } from "@/lib/supabaseOperations";
 import santoriniImage from "@/assets/destination-santorini.jpg";
-import hotelImage from "@/assets/hotel-luxury.jpg";
-import divingImage from "@/assets/activity-diving.jpg";
 
 const DestinationDetail = () => {
   const { id } = useParams();
+  const [destination, setDestination] = useState<any>(null);
+  const [hotels, setHotels] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [selectedHotels, setSelectedHotels] = useState<string[]>([]);
+  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - will be fetched from API
-  const destination = {
-    id: "1",
-    name: "Santorini",
-    location: "Greece",
-    image: santoriniImage,
-    price: 2499,
-    rating: 4.9,
-    description:
-      "Santorini is the ultimate romantic getaway, with stunning sunsets, white-washed buildings, and crystal-clear waters. Experience the magic of this Greek island paradise with its unique volcanic beaches, world-class wines, and breathtaking caldera views.",
-    highlights: [
-      "Iconic white and blue architecture",
-      "World-famous sunset views in Oia",
-      "Volcanic beaches with unique colors",
-      "Exceptional local wines and cuisine",
-      "Ancient archaeological sites",
-    ],
-  };
+  useEffect(() => {
+    loadDestinationData();
+  }, [id]);
 
-  const relatedHotels = [
-    {
-      id: "1",
-      name: "Luxury Sky Resort",
-      location: "Santorini, Greece",
-      image: hotelImage,
-      pricePerNight: 450,
-      rating: 4.9,
-    },
-  ];
+  async function loadDestinationData() {
+    try {
+      setLoading(true);
+      const [destinationsData, hotelsData, activitiesData] = await Promise.all([
+        getDestinationsFromSupabase(),
+        getHotelsFromSupabase({ destination_id: id }),
+        getActivitiesFromSupabase({ destination_id: id })
+      ]);
+      
+      const foundDestination = destinationsData.find((d: any) => d.id === id);
+      setDestination(foundDestination || {
+        id: id,
+        name: "Destination Not Found",
+        location: "Unknown",
+        description: "This destination could not be found.",
+        price: 0,
+        rating: 0,
+        image_url: santoriniImage
+      });
+      
+      setHotels(hotelsData || []);
+      setActivities(activitiesData || []);
+    } catch (error) {
+      console.error('Error loading destination data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const relatedActivities = [
-    {
-      id: "1",
-      name: "Scuba Diving Adventure",
-      category: "Water Sports",
-      image: divingImage,
-      price: 199,
-      duration: "4 hours",
-    },
-  ];
+  function calculateTotalPrice() {
+    if (!destination) return 0;
+    let total = destination.price || 0;
+    
+    selectedHotels.forEach(hotelId => {
+      const hotel = hotels.find((h: any) => h.id === hotelId);
+      if (hotel) total += hotel.price || 0;
+    });
+    
+    selectedActivities.forEach(activityId => {
+      const activity = activities.find((a: any) => a.id === activityId);
+      if (activity) total += activity.price || 0;
+    });
+    
+    return total;
+  }
+
+  function getSelectedItems() {
+    if (!destination) return [];
+    const items = [{ id: destination.id, name: destination.name, type: 'destination', price: destination.price || 0 }];
+    
+    selectedHotels.forEach(hotelId => {
+      const hotel = hotels.find((h: any) => h.id === hotelId);
+      if (hotel) items.push({ id: hotel.id, name: hotel.name, type: 'hotel', price: hotel.price });
+    });
+    
+    selectedActivities.forEach(activityId => {
+      const activity = activities.find((a: any) => a.id === activityId);
+      if (activity) items.push({ id: activity.id, name: activity.name, type: 'activity', price: activity.price });
+    });
+    
+    return items;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-20 flex items-center justify-center h-96">
+          <div className="text-2xl font-semibold">Loading destination...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!destination) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-20 flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="text-2xl font-semibold mb-4">Destination not found</div>
+            <Button asChild>
+              <Link to="/destinations">Browse Destinations</Link>
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,7 +127,7 @@ const DestinationDetail = () => {
         {/* Hero Image */}
         <div className="relative h-[60vh] overflow-hidden">
           <img
-            src={destination.image}
+            src={destination.image_url || santoriniImage}
             alt={destination.name}
             className="w-full h-full object-cover"
           />
@@ -98,22 +162,26 @@ const DestinationDetail = () => {
               <div className="bg-secondary rounded-xl p-6 md:min-w-[280px]">
                 <div className="text-sm text-muted-foreground mb-2">Package from</div>
                 <div className="text-4xl font-bold text-primary mb-6">
-                  ${destination.price.toLocaleString()}
+                  ${(destination.price || 0).toLocaleString()}
                 </div>
-                <Button className="w-full bg-gradient-to-r from-primary to-accent mb-3" size="lg">
+                <Button 
+                  onClick={() => setShowBookingModal(true)}
+                  className="w-full bg-gradient-to-r from-primary to-accent mb-3" 
+                  size="lg"
+                >
                   <Calendar className="w-5 h-5 mr-2" />
                   Book Now
                 </Button>
-                <Button variant="outline" className="w-full" size="lg">
-                  <Users className="w-5 h-5 mr-2" />
-                  Customize Package
-                </Button>
+                <div className="text-sm text-muted-foreground text-center">
+                  Total: ${calculateTotalPrice().toLocaleString()}
+                </div>
               </div>
             </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="customize">Customize Package</TabsTrigger>
                 <TabsTrigger value="gallery">Gallery</TabsTrigger>
               </TabsList>
 
@@ -121,22 +189,82 @@ const DestinationDetail = () => {
                 <div>
                   <h2 className="text-2xl font-bold mb-4">About this Destination</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    {destination.description}
+                    {destination.description || 'No description available for this destination.'}
                   </p>
                 </div>
+              </TabsContent>
 
+              <TabsContent value="customize" className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-bold mb-4">Highlights</h3>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {destination.highlights.map((highlight, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="bg-primary/10 rounded-full p-1 mt-0.5">
-                          <div className="w-2 h-2 bg-primary rounded-full" />
+                  <h2 className="text-2xl font-bold mb-4">Customize Your Package</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Select additional hotels and activities to create your perfect trip
+                  </p>
+                  
+                  {/* Hotels Selection */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4">Add Hotels</h3>
+                    <div className="space-y-4">
+                      {hotels.map((hotel: any) => (
+                        <div key={hotel.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                          <Checkbox
+                            checked={selectedHotels.includes(hotel.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedHotels([...selectedHotels, hotel.id]);
+                              } else {
+                                setSelectedHotels(selectedHotels.filter(id => id !== hotel.id));
+                              }
+                            }}
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{hotel.name}</h4>
+                            <p className="text-sm text-muted-foreground">{hotel.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">${hotel.price}</div>
+                            <div className="text-sm text-muted-foreground">per night</div>
+                          </div>
                         </div>
-                        <span>{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Activities Selection */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4">Add Activities</h3>
+                    <div className="space-y-4">
+                      {activities.map((activity: any) => (
+                        <div key={activity.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                          <Checkbox
+                            checked={selectedActivities.includes(activity.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedActivities([...selectedActivities, activity.id]);
+                              } else {
+                                setSelectedActivities(selectedActivities.filter(id => id !== activity.id));
+                              }
+                            }}
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{activity.name}</h4>
+                            <p className="text-sm text-muted-foreground">{activity.description}</p>
+                            <p className="text-sm text-muted-foreground">Duration: {activity.duration}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">${activity.price}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-secondary p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold">Total Package Price:</span>
+                      <span className="text-2xl font-bold text-primary">${calculateTotalPrice().toLocaleString()}</span>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -157,28 +285,45 @@ const DestinationDetail = () => {
           </Card>
 
           {/* Related Hotels */}
-          <section className="py-16">
-            <h2 className="text-3xl font-bold mb-8">Hotels in {destination.name}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {relatedHotels.map((hotel) => (
-                <HotelCard key={hotel.id} {...hotel} />
-              ))}
-            </div>
-          </section>
+          {!loading && hotels.length > 0 && (
+            <section className="py-16">
+              <h2 className="text-3xl font-bold mb-8">Hotels in {destination.name}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {hotels.map((hotel: any) => (
+                  <HotelCard key={hotel.id} hotel={hotel} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Related Activities */}
-          <section className="py-16">
-            <h2 className="text-3xl font-bold mb-8">Activities in {destination.name}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {relatedActivities.map((activity) => (
-                <ActivityCard key={activity.id} {...activity} />
-              ))}
-            </div>
-          </section>
+          {!loading && activities.length > 0 && (
+            <section className="py-16">
+              <h2 className="text-3xl font-bold mb-8">Activities in {destination.name}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {activities.map((activity: any) => (
+                  <ActivityCard key={activity.id} activity={activity} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
       <Footer />
+      
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        item={{
+          id: destination.id,
+          name: destination.name,
+          type: 'destination',
+          price: destination.price || 0
+        }}
+        selectedItems={getSelectedItems()}
+        totalAmount={calculateTotalPrice()}
+      />
     </div>
   );
 };

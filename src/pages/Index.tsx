@@ -1,309 +1,298 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getDestinationsFromSupabase, getHotelsFromSupabase, getActivitiesFromSupabase } from "@/lib/supabaseOperations";
+import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SearchBar from "@/components/SearchBar";
-import DestinationCard from "@/components/DestinationCard";
-import ActivityCard from "@/components/ActivityCard";
-import HotelCard from "@/components/HotelCard";
-import LoadingCard from "@/components/LoadingCard";
-import ErrorMessage from "@/components/ErrorMessage";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { useDestinations } from "@/hooks/useDestinations";
-import { useHotels } from "@/hooks/useHotels";
-import { useActivities } from "@/hooks/useActivities";
-import heroImage from "@/assets/hero-beach.jpg";
-import santoriniImage from "@/assets/destination-santorini.jpg";
-import baliImage from "@/assets/destination-bali.jpg";
-import maldivesImage from "@/assets/destination-maldives.jpg";
-import hotelImage from "@/assets/hotel-luxury.jpg";
-import divingImage from "@/assets/activity-diving.jpg";
+import { Search, Calendar, MapPin } from "lucide-react";
 
-const Index = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  
-  // Fetch real data from API
-  const { 
-    destinations: featuredDestinations, 
-    loading: loadingDestinations, 
-    error: errorDestinations 
-  } = useDestinations(true);
-  
-  const { 
-    hotels: topHotels, 
-    loading: loadingHotels, 
-    error: errorHotels 
-  } = useHotels();
-  
-  const { 
-    activities: popularActivities, 
-    loading: loadingActivities, 
-    error: errorActivities 
-  } = useActivities();
+export default function HomePage() {
+  const [destinations, setDestinations] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadDestinations() {
+    try {
+      const data = await getDestinationsFromSupabase({ featured: true });
+      setDestinations(data);
+    } catch (error) {
+      console.error('Error loading destinations:', error);
+      setDestinations([]);
+    }
+  }
+
+  async function loadHotels() {
+    try {
+      const data = await getHotelsFromSupabase();
+      setHotels(data || []);
+    } catch (error) {
+      console.error('Error loading hotels:', error);
+      setHotels([]);
+    }
+  }
+
+  async function loadActivities() {
+    try {
+      const data = await getActivitiesFromSupabase();
+      setActivities(data || []);
+    } catch (error) {
+      console.error('Error loading activities:', error);
+      setActivities([]);
+    }
+  }
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      setError(null);
+      await Promise.all([loadDestinations(), loadHotels(), loadActivities()]);
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load content. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setIsVisible(true);
+    loadData();
+
+    const destChannel = supabase
+      .channel('destinations-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'destinations' }, () => loadDestinations())
+      .subscribe();
+
+    const hotelsChannel = supabase
+      .channel('hotels-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hotels' }, () => loadHotels())
+      .subscribe();
+
+    const activitiesChannel = supabase
+      .channel('activities-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities' }, () => loadActivities())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(destChannel);
+      supabase.removeChannel(hotelsChannel);
+      supabase.removeChannel(activitiesChannel);
+    };
   }, []);
 
-  // Fallback data for when API is unavailable or returns empty
-  const fallbackDestinations = [
-    {
-      destination_id: "1",
-      name: "Santorini",
-      location: "Greece",
-      image_url: santoriniImage,
-      price: 2499,
-      rating: 4.9,
-      description: "",
-      category: "Beach",
-      featured: true,
-    },
-    {
-      destination_id: "2",
-      name: "Bali",
-      location: "Indonesia",
-      image_url: baliImage,
-      price: 1899,
-      rating: 4.8,
-      description: "",
-      category: "Cultural",
-      featured: true,
-    },
-    {
-      destination_id: "3",
-      name: "Maldives",
-      location: "Indian Ocean",
-      image_url: maldivesImage,
-      price: 3499,
-      rating: 5.0,
-      description: "",
-      category: "Beach",
-      featured: true,
-    },
-  ];
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-2xl font-semibold">Loading amazing destinations...</div>
+        </div>
+      </>
+    );
+  }
 
-  const fallbackActivities = [
-    {
-      activity_id: "1",
-      name: "Scuba Diving Adventure",
-      category: "Water Sports",
-      image_url: divingImage,
-      price: 199,
-      duration: "4 hours",
-      description: "",
-      destination_id: "",
-    },
-  ];
-
-  const fallbackHotels = [
-    {
-      hotel_id: "1",
-      name: "Luxury Sky Resort",
-      destination_id: "",
-      description: "",
-      image_url: hotelImage,
-      price_per_night: 450,
-      rating: 4.9,
-      amenities: [],
-    },
-  ];
-
-  const displayDestinations = featuredDestinations.length > 0 ? featuredDestinations : fallbackDestinations;
-  const displayActivities = popularActivities.length > 0 ? popularActivities : fallbackActivities;
-  const displayHotels = topHotels.length > 0 ? topHotels : fallbackHotels;
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-red-600 mb-4">{error}</div>
+            <button 
+              onClick={loadData}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <Navbar />
-
-      {/* Hero Section */}
-      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${heroImage})`,
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/70 to-accent/60" />
-
-        <div
-          className={`relative z-10 container mx-auto px-4 text-center transition-all duration-1000 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Sparkles className="w-6 h-6 text-accent" />
-            <span className="text-white/90 font-medium">Premium Travel Experiences</span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-            Discover Your Next
-            <br />
-            <span className="bg-gradient-to-r from-accent to-white bg-clip-text text-transparent">
-              Dream Destination
-            </span>
-          </h1>
-          <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-            Curated holiday experiences to the world's most beautiful destinations
-          </p>
-
-          <div className="max-w-5xl mx-auto">
-            <SearchBar />
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Destinations */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-4xl font-bold mb-3">Featured Destinations</h2>
-            <p className="text-muted-foreground text-lg">
-              Handpicked locations for unforgettable experiences
-            </p>
-          </div>
-          <Button asChild variant="ghost" className="group">
-            <Link to="/explore">
-              View All
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
-        </div>
-
-        {errorDestinations && (
-          <ErrorMessage message={errorDestinations} />
-        )}
+      <div className="min-h-screen pt-16">  {/* pt-16 for fixed navbar spacing */}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {loadingDestinations ? (
-            <>
-              <LoadingCard />
-              <LoadingCard />
-              <LoadingCard />
-            </>
-          ) : (
-            displayDestinations.map((dest) => (
-              <DestinationCard 
-                key={dest.destination_id} 
-                id={dest.destination_id}
-                name={dest.name}
-                location={dest.location}
-                image={dest.image_url}
-                price={dest.price}
-                rating={dest.rating}
-              />
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Popular Activities */}
-      <section className="bg-secondary py-20">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-4xl font-bold mb-3">Popular Activities</h2>
-              <p className="text-muted-foreground text-lg">
-                Adventure awaits at every destination
-              </p>
+        {/* Hero Section */}
+        <section className="relative h-[600px] bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800')"}}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-4">
+            <h1 className="text-6xl font-bold mb-4 text-center">Discover Your Next Dream Destination</h1>
+            <p className="text-xl mb-8">Curated holiday experiences to the world's most beautiful destinations</p>
+            
+            {/* Trip Search Section */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 w-full max-w-4xl mt-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Find Your Perfect Trip</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    placeholder="Where to?"
+                    className="pl-10 h-12 text-gray-800"
+                  />
+                </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    type="date"
+                    placeholder="Check-in"
+                    className="pl-10 h-12 text-gray-800"
+                  />
+                </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    type="date"
+                    placeholder="Check-out"
+                    className="pl-10 h-12 text-gray-800"
+                  />
+                </div>
+                <Button className="h-12 bg-gradient-to-r from-primary to-accent hover:shadow-lg">
+                  <Search className="w-5 h-5 mr-2" />
+                  Search
+                </Button>
+              </div>
             </div>
-            <Button asChild variant="ghost" className="group">
-              <Link to="/explore">
-                View All
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
           </div>
+        </section>
 
-          {errorActivities && (
-            <ErrorMessage message={errorActivities} />
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {loadingActivities ? (
-              <>
-                <LoadingCard />
-                <LoadingCard />
-                <LoadingCard />
-              </>
-            ) : (
-              displayActivities.map((activity) => (
-                <ActivityCard 
-                  key={activity.activity_id}
-                  id={activity.activity_id}
-                  name={activity.name}
-                  category={activity.category}
-                  image={activity.image_url}
-                  price={activity.price}
-                  duration={activity.duration}
-                />
-              ))
-            )}
+        {/* Featured Destinations - REAL DATA */}
+        <section className="py-16 px-8 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-4xl font-bold">Featured Destinations</h2>
+                <p className="text-gray-600 mt-2">Handpicked locations for unforgettable experiences</p>
+              </div>
+              <Link to="/explore" className="text-blue-600 hover:underline font-semibold">View All →</Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {destinations.length === 0 ? (
+                <p className="col-span-3 text-center text-gray-500">No featured destinations yet. Add some in the admin panel!</p>
+              ) : (
+                destinations.map((dest: any) => (
+                  <Link
+                    key={dest.id}
+                    to={`/destination/${dest.id}`}
+                    className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src={dest.image_url || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4"}
+                        alt={dest.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-semibold">
+                        ⭐ {dest.rating || "5.0"}
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold mb-2">{dest.name}</h3>
+                      <p className="text-gray-600 mb-4">📍 {dest.location}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">From</span>
+                        <span className="text-2xl font-bold text-blue-600">${dest.price}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Top Hotels */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-4xl font-bold mb-3">Top Hotels</h2>
-            <p className="text-muted-foreground text-lg">
-              Luxury accommodations for your perfect stay
-            </p>
+        {/* Popular Activities - REAL DATA */}
+        <section className="py-16 px-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-4xl font-bold">Popular Activities</h2>
+                <p className="text-gray-600 mt-2">Exciting experiences for every traveler</p>
+              </div>
+              <Link to="/activities" className="text-blue-600 hover:underline font-semibold">View All →</Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {activities.length === 0 ? (
+                <p className="col-span-4 text-center text-gray-500">No featured activities yet. Add some in the admin panel!</p>
+              ) : (
+                activities.slice(0, 4).map((activity: any) => (
+                  <Link key={activity.id} to={`/activity/${activity.id}`} className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+                    <div className="h-48 overflow-hidden">
+                      <img
+                        src={activity.image_url || "https://images.unsplash.com/photo-1544551763-46a013bb70d5"}
+                        alt={activity.name}
+                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <span className="text-xs text-gray-500 uppercase">{activity.category}</span>
+                      <h3 className="text-lg font-bold mt-1">{activity.name}</h3>
+                      <p className="text-sm text-gray-600 mt-2">⏱️ {activity.duration || "Varies"}</p>
+                      <p className="text-lg font-bold text-blue-600 mt-3">From ${activity.price}</p>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
           </div>
-          <Button asChild variant="ghost" className="group">
-            <Link to="/explore">
-              View All
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
-        </div>
+        </section>
 
-        {errorHotels && (
-          <ErrorMessage message={errorHotels} />
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {loadingHotels ? (
-            <>
-              <LoadingCard />
-              <LoadingCard />
-              <LoadingCard />
-            </>
-          ) : (
-            displayHotels.map((hotel) => (
-              <HotelCard 
-                key={hotel.hotel_id}
-                id={hotel.hotel_id}
-                name={hotel.name}
-                location="Location"
-                image={hotel.image_url}
-                pricePerNight={hotel.price_per_night}
-                rating={hotel.rating}
-              />
-            ))
-          )}
-        </div>
-      </section>
+        {/* Top Hotels - REAL DATA */}
+        <section className="py-16 px-8 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-4xl font-bold">Top Hotels</h2>
+                <p className="text-gray-600 mt-2">Luxury accommodations for your perfect stay</p>
+              </div>
+              <Link to="/hotels" className="text-blue-600 hover:underline font-semibold">View All →</Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {hotels.length === 0 ? (
+                <p className="col-span-3 text-center text-gray-500">No featured hotels yet. Add some in the admin panel!</p>
+              ) : (
+                hotels.slice(0, 3).map((hotel: any) => (
+                  <Link key={hotel.id} to={`/hotel/${hotel.id}`} className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
+                    <div className="h-56 overflow-hidden">
+                      <img
+                        src={hotel.image_url || "https://images.unsplash.com/photo-1566073771259-6a8506099945"}
+                        alt={hotel.name}
+                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-xl font-bold">{hotel.name}</h3>
+                        <span className="text-sm">⭐ {hotel.rating || "5.0"}</span>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4">{hotel.description?.substring(0, 100) || 'Luxury accommodation with world-class amenities'}...</p>
+                      <p className="text-sm text-gray-500">Per night</p>
+                      <p className="text-2xl font-bold text-blue-600">${hotel.price}</p>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
 
-      {/* CTA Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-10" />
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-4xl font-bold mb-6">Ready to Start Your Journey?</h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Let us help you create memories that will last a lifetime
-          </p>
-          <Button asChild size="lg" className="bg-gradient-to-r from-primary to-accent text-lg">
-            <Link to="/contact">Get in Touch</Link>
-          </Button>
-        </div>
-      </section>
+        {/* CTA */}
+        <section className="py-20 bg-blue-600 text-white text-center">
+          <h2 className="text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
+          <p className="text-xl mb-8">Let us help you create memories that will last a lifetime</p>
+          <Link to="/contact" className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
+            Get in Touch
+          </Link>
+        </section>
+      </div>
 
       <Footer />
-    </div>
+    </>
   );
-};
-
-export default Index;
+}

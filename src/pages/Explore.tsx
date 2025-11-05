@@ -26,7 +26,7 @@ const Explore = () => {
       id: "1",
       name: "Santorini",
       location: "Greece",
-      image: santoriniImage,
+      image_url: santoriniImage,
       price: 2499,
       rating: 4.9,
     },
@@ -34,7 +34,7 @@ const Explore = () => {
       id: "2",
       name: "Bali",
       location: "Indonesia",
-      image: baliImage,
+      image_url: baliImage,
       price: 1899,
       rating: 4.8,
     },
@@ -42,7 +42,7 @@ const Explore = () => {
       id: "3",
       name: "Maldives",
       location: "Indian Ocean",
-      image: maldivesImage,
+      image_url: maldivesImage,
       price: 3499,
       rating: 5.0,
     },
@@ -53,8 +53,8 @@ const Explore = () => {
       id: "1",
       name: "Luxury Sky Resort",
       location: "Dubai, UAE",
-      image: hotelImage,
-      pricePerNight: 450,
+      image_url: hotelImage,
+      price: 450,
       rating: 4.9,
     },
   ];
@@ -64,7 +64,7 @@ const Explore = () => {
       id: "1",
       name: "Scuba Diving Adventure",
       category: "Water Sports",
-      image: divingImage,
+      image_url: divingImage,
       price: 199,
       duration: "4 hours",
     },
@@ -144,7 +144,7 @@ const Explore = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {destinations.map((dest) => (
-                <DestinationCard key={dest.id} {...dest} />
+                <DestinationCard key={dest.id} destination={dest} />
               ))}
             </div>
           </TabsContent>
@@ -159,7 +159,7 @@ const Explore = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {hotels.map((hotel) => (
-                <HotelCard key={hotel.id} {...hotel} />
+                <HotelCard key={hotel.id} hotel={hotel} />
               ))}
             </div>
           </TabsContent>
@@ -176,7 +176,7 @@ const Explore = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {activities.map((activity) => (
-                <ActivityCard key={activity.id} {...activity} />
+                <ActivityCard key={activity.id} activity={activity} />
               ))}
             </div>
           </TabsContent>

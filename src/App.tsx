@@ -16,7 +16,7 @@ import HotelDetail from "./pages/HotelDetail";
 import ActivityDetail from "./pages/ActivityDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import NotFound from "./pages/NotFound";
-import AdminLogin from "@/pages/admin/Login"; 
+import AdminLogin from "@/pages/admin/login"; 
 import AdminLayout from "@/pages/admin/Layout";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminDestinations from "@/pages/admin/Destinations";

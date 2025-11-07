@@ -10,9 +10,13 @@ const Footer = () => {
           {/* Faro Holidays */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="bg-gradient-to-br from-primary to-accent p-2 rounded-lg">
-                <Plane className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <div>
+        <img 
+            src="assets/img/favicon.ico" 
+            alt="Custom Icon" 
+            className="w-12 h-12"
+        />
+      </div>
               <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Faro Holidays
               </span>

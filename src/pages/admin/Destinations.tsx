@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { createDestinationInSupabase, getDestinationsFromSupabase, updateDestinationInSupabase, deleteDestinationFromSupabase } from "@/lib/supabaseOperations";
+import { uploadImage } from "@/lib/imageUpload";
+import RichTextEditor from "@/components/RichTextEditor";
+import '@/styles/quill.css';
+// Storage bucket should be configured manually in Supabase dashboard
 
 export default function AdminDestinations() {
   const [destinations, setDestinations] = useState([]);
@@ -14,9 +18,11 @@ export default function AdminDestinations() {
     price: 0,
     category: "",
     image_url: "",
-    rating: 5,
     featured: false
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [editFormData, setEditFormData] = useState({
     name: "",
     location: "",
@@ -24,7 +30,6 @@ export default function AdminDestinations() {
     price: 0,
     category: "",
     image_url: "",
-    rating: 5,
     featured: false
   });
 
@@ -55,7 +60,7 @@ export default function AdminDestinations() {
       const created = await createDestinationInSupabase(formData);
       setDestinations([...(destinations as any), created]);
       setShowForm(false);
-      setFormData({ name: "", location: "", description: "", price: 0, category: "", image_url: "", rating: 5, featured: false });
+      setFormData({ name: "", location: "", description: "", price: 0, category: "", image_url: "", featured: false });
       alert("Destination created successfully!");
     } catch (error: any) {
       console.error('Error creating destination:', error);
@@ -89,9 +94,9 @@ export default function AdminDestinations() {
       price: dest.price || 0,
       category: dest.category || "",
       image_url: dest.image_url || "",
-      rating: dest.rating || 5,
       featured: !!dest.featured
     });
+    setEditImageFile(null);
   }
 
   function cancelEdit() {
@@ -150,8 +155,8 @@ export default function AdminDestinations() {
             <input
               type="number"
               placeholder="Price"
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value)})}
+              value={formData.price || ''}
+              onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
               className="border px-4 py-2 rounded"
             />
             <input
@@ -168,13 +173,14 @@ export default function AdminDestinations() {
               onChange={(e) => setFormData({...formData, image_url: e.target.value})}
               className="border px-4 py-2 rounded col-span-2"
             />
-            <textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="border px-4 py-2 rounded col-span-2"
-              rows={3}
-            />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Description</label>
+              <RichTextEditor
+                value={formData.description}
+                onChange={(value) => setFormData({...formData, description: value})}
+                placeholder="Enter destination description..."
+              />
+            </div>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -202,6 +208,7 @@ export default function AdminDestinations() {
               <th className="px-6 py-3 text-left">Location</th>
               <th className="px-6 py-3 text-left">Price</th>
               <th className="px-6 py-3 text-left">Category</th>
+              <th className="px-6 py-3 text-left">Image</th>
               <th className="px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
@@ -236,7 +243,7 @@ export default function AdminDestinations() {
                   {editingId === dest.id ? (
                     <input
                       type="number"
-                      value={editFormData.price}
+                      value={editFormData.price || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, price: parseFloat(e.target.value) || 0 })}
                       className="border px-2 py-1 rounded w-24"
                     />
@@ -254,6 +261,21 @@ export default function AdminDestinations() {
                     />
                   ) : (
                     dest.category
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  {editingId === dest.id ? (
+                    <input
+                      type="text"
+                      placeholder="Image URL"
+                      value={editFormData.image_url}
+                      onChange={(e) => setEditFormData({ ...editFormData, image_url: e.target.value })}
+                      className="border px-2 py-1 rounded w-full text-xs"
+                    />
+                  ) : (
+                    dest.image_url && (
+                      <img src={dest.image_url} alt={dest.name} className="w-16 h-16 object-cover rounded" />
+                    )
                   )}
                 </td>
                 <td className="px-6 py-4 flex gap-3">

@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,10 @@ import hotelImage from "@/assets/hotel-luxury.jpg";
 
 const HotelDetail = () => {
   const { id } = useParams();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const hotel = {
     id: "1",
@@ -43,7 +48,7 @@ const HotelDetail = () => {
 
         <div className="container mx-auto px-4 -mt-32 relative z-10">
           <Button asChild variant="ghost" className="mb-4 bg-background/80 backdrop-blur-sm">
-            <Link to="/explore">
+            <Link to="/hotels">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Explore
             </Link>
@@ -57,13 +62,7 @@ const HotelDetail = () => {
                   <span className="text-lg">{hotel.location}</span>
                 </div>
                 <h1 className="text-5xl font-bold mb-4">{hotel.name}</h1>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 fill-accent text-accent" />
-                    <span className="font-semibold">{hotel.rating}</span>
-                    <span className="text-muted-foreground">(256 reviews)</span>
-                  </div>
-                </div>
+
               </div>
 
               <div className="bg-secondary rounded-xl p-6 md:min-w-[280px]">

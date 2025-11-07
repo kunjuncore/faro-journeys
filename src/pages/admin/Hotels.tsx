@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createHotelInSupabase, getHotelsFromSupabase, updateHotelInSupabase, deleteHotelFromSupabase, getDestinationsFromSupabase } from "@/lib/supabaseOperations";
+import { uploadImage } from "@/lib/imageUpload";
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function AdminHotels() {
   const [hotels, setHotels] = useState([]);
@@ -12,18 +14,15 @@ export default function AdminHotels() {
     destination_id: "",
     description: "",
     price: 0,
-    image_url: "",
-    rating: 5,
-    featured: false
+    image_url: ""
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editFormData, setEditFormData] = useState({
     name: "",
     destination_id: "",
     description: "",
     price: 0,
-    image_url: "",
-    rating: 5,
-    featured: false
+    image_url: ""
   });
 
   useEffect(() => {
@@ -62,7 +61,7 @@ export default function AdminHotels() {
       const created = await createHotelInSupabase(formData);
       setHotels([...(hotels as any), created]);
       setShowForm(false);
-      setFormData({ name: "", destination_id: "", description: "", price: 0, image_url: "", rating: 5, featured: false });
+      setFormData({ name: "", destination_id: "", description: "", price: 0, image_url: "" });
       alert("Hotel created successfully!");
     } catch (error: any) {
       console.error('Error creating hotel:', error);
@@ -94,9 +93,7 @@ export default function AdminHotels() {
       destination_id: hotel.destination_id || "",
       description: hotel.description || "",
       price: hotel.price || 0,
-      image_url: hotel.image_url || "",
-      rating: hotel.rating || 5,
-      featured: !!hotel.featured
+      image_url: hotel.image_url || ""
     });
   }
 
@@ -160,37 +157,21 @@ export default function AdminHotels() {
               className="border px-4 py-2 rounded"
             />
             <input
-              type="number"
-              placeholder="Rating (1-5)"
-              min="1"
-              max="5"
-              step="0.1"
-              value={formData.rating || 5}
-              onChange={(e) => setFormData({...formData, rating: parseFloat(e.target.value) || 5})}
-              className="border px-4 py-2 rounded"
-            />
-            <input
               type="text"
               placeholder="Image URL"
               value={formData.image_url}
               onChange={(e) => setFormData({...formData, image_url: e.target.value})}
               className="border px-4 py-2 rounded col-span-2"
             />
-            <textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="border px-4 py-2 rounded col-span-2"
-              rows={3}
-            />
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Description</label>
+              <RichTextEditor
+                value={formData.description}
+                onChange={(value) => setFormData({...formData, description: value})}
+                placeholder="Enter hotel description..."
               />
-              Featured
-            </label>
+            </div>
+
           </div>
           <button
             onClick={handleCreate}
@@ -209,8 +190,7 @@ export default function AdminHotels() {
               <th className="px-6 py-3 text-left">Name</th>
               <th className="px-6 py-3 text-left">Destination</th>
               <th className="px-6 py-3 text-left">Price</th>
-              <th className="px-6 py-3 text-left">Rating</th>
-              <th className="px-6 py-3 text-left">Featured</th>
+              <th className="px-6 py-3 text-left">Image</th>
               <th className="px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
@@ -260,29 +240,8 @@ export default function AdminHotels() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    {editingId === hotel.id ? (
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        step="0.1"
-                        value={editFormData.rating}
-                        onChange={(e) => setEditFormData({ ...editFormData, rating: parseFloat(e.target.value) || 5 })}
-                        className="border px-2 py-1 rounded w-20"
-                      />
-                    ) : (
-                      hotel.rating
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {editingId === hotel.id ? (
-                      <input
-                        type="checkbox"
-                        checked={editFormData.featured}
-                        onChange={(e) => setEditFormData({ ...editFormData, featured: e.target.checked })}
-                      />
-                    ) : (
-                      hotel.featured ? 'Yes' : 'No'
+                    {hotel.image_url && (
+                      <img src={hotel.image_url} alt={hotel.name} className="w-16 h-16 object-cover rounded" />
                     )}
                   </td>
                   <td className="px-6 py-4 flex gap-3">

@@ -15,6 +15,7 @@ export default function Destinations() {
   const [category, setCategory] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     loadDestinations();
   }, [category]);
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getLeadsFromSupabase, updateLeadInSupabase } from "@/lib/supabaseOperations";
+import { getLeadsFromSupabase, updateLeadStatusInSupabase } from "@/lib/supabaseOperations";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLeads() {
   const [leads, setLeads] = useState([]);
@@ -24,14 +25,27 @@ export default function AdminLeads() {
 
   async function updateLeadStatus(id: string, status: string) {
     try {
-      await updateLeadInSupabase(id, { status });
+      await updateLeadStatusInSupabase(id, status);
       setLeads((prev: any) => prev.map((lead: any) => 
         lead.id === id ? { ...lead, status } : lead
       ));
       alert("Lead status updated!");
     } catch (error: any) {
       console.error('Error updating lead:', error);
-      alert('Failed to update lead: ' + error.message);
+      alert('Failed to update lead status');
+    }
+  }
+
+  async function deleteLead(id: string) {
+    if (!confirm('Are you sure you want to delete this lead?')) return;
+    try {
+      const { error } = await supabase.from('leads').delete().eq('id', id);
+      if (error) throw error;
+      setLeads((prev: any) => prev.filter((lead: any) => lead.id !== id));
+      alert('Lead deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      alert('Failed to delete lead');
     }
   }
 
@@ -81,8 +95,7 @@ export default function AdminLeads() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left">Customer</th>
-              <th className="px-6 py-3 text-left">Item</th>
-              <th className="px-6 py-3 text-left">Amount</th>
+              <th className="px-6 py-3 text-left">Booking Details</th>
               <th className="px-6 py-3 text-left">Status</th>
               <th className="px-6 py-3 text-left">Date</th>
               <th className="px-6 py-3 text-left">Actions</th>
@@ -99,13 +112,9 @@ export default function AdminLeads() {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div>
-                    <div className="font-medium">{lead.item_name}</div>
-                    <div className="text-sm text-gray-600 capitalize">{lead.item_type}</div>
+                  <div className="text-sm text-gray-600 max-w-xs">
+                    {lead.message}
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="font-semibold">${lead.total_amount || lead.item_price}</div>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(lead.status)}`}>
@@ -141,6 +150,12 @@ export default function AdminLeads() {
                         </button>
                       </>
                     )}
+                    <button
+                      onClick={() => deleteLead(lead.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>

@@ -58,7 +58,7 @@ const BookingConfirmation = () => {
               <Link to="/">Back to Home</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="/explore">Explore More</Link>
+              <Link to="/">Explore More</Link>
             </Button>
           </div>
         </Card>

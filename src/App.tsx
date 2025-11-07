@@ -4,11 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Explore from "./pages/Explore";
 import Destinations from "./pages/Destinations";
 import Hotels from "./pages/Hotels";
 import Activities from "./pages/Activities";
 import TravelThemes from "./pages/TravelThemes";
+import TravelThemeDetail from "./pages/TravelThemeDetail";
 import Reviews from "./pages/Reviews";
 import Contact from "./pages/Contact";
 import DestinationDetail from "./pages/DestinationDetail";
@@ -22,6 +22,7 @@ import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminDestinations from "@/pages/admin/Destinations";
 import AdminHotels from "@/pages/admin/Hotels";
 import AdminActivities from "@/pages/admin/Activities";
+import AdminTravelThemes from "@/pages/admin/TravelThemes";
 import AdminBookings from "@/pages/admin/Bookings";
 import AdminLeads from "@/pages/admin/Leads";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -38,11 +39,11 @@ const App = () => (
         <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/explore" element={<Explore />} />
           <Route path="/destinations" element={<Destinations />} />
           <Route path="/hotels" element={<Hotels />} />
           <Route path="/activities" element={<Activities />} />
           <Route path="/themes" element={<TravelThemes />} />
+          <Route path="/travel-theme/:id" element={<TravelThemeDetail />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/destination/:id" element={<DestinationDetail />} />
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="destinations" element={<AdminDestinations />} />
             <Route path="hotels" element={<AdminHotels />} />
             <Route path="activities" element={<AdminActivities />} />
+            <Route path="themes" element={<AdminTravelThemes />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="leads" element={<AdminLeads />} />
           </Route>

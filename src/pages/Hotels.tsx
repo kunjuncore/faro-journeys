@@ -13,6 +13,7 @@ export default function Hotels() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     loadHotels();
   }, []);
 

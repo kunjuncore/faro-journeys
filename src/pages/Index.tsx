@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDestinationsFromSupabase, getHotelsFromSupabase, getActivitiesFromSupabase } from "@/lib/supabaseOperations";
+import { getDestinationsFromSupabase, getHotelsFromSupabase, getActivitiesFromSupabase, getTravelThemesFromSupabase } from "@/lib/supabaseOperations";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Calendar, MapPin } from "lucide-react";
+import SearchBar from "@/components/SearchBar";
 
 export default function HomePage() {
   const [destinations, setDestinations] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,11 +44,21 @@ export default function HomePage() {
     }
   }
 
+  async function loadThemes() {
+    try {
+      const data = await getTravelThemesFromSupabase({ featured: true });
+      setThemes(data || []);
+    } catch (error) {
+      console.error('Error loading themes:', error);
+      setThemes([]);
+    }
+  }
+
   async function loadData() {
     try {
       setLoading(true);
       setError(null);
-      await Promise.all([loadDestinations(), loadHotels(), loadActivities()]);
+      await Promise.all([loadDestinations(), loadHotels(), loadActivities(), loadThemes()]);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load content. Please try again later.');
@@ -103,7 +112,7 @@ export default function HomePage() {
             <div className="text-2xl font-semibold text-red-600 mb-4">{error}</div>
             <button 
               onClick={loadData}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+              className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:opacity-90 transition"
             >
               Try Again
             </button>
@@ -119,47 +128,36 @@ export default function HomePage() {
       <div className="min-h-screen pt-16">  {/* pt-16 for fixed navbar spacing */}
         
         {/* Hero Section */}
-        <section className="relative h-[600px] bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800')"}}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-4">
-            <h1 className="text-6xl font-bold mb-4 text-center">Discover Your Next Dream Destination</h1>
-            <p className="text-xl mb-8">Curated holiday experiences to the world's most beautiful destinations</p>
+        <section className="relative h-[600px] group overflow-hidden">
             
-            {/* Trip Search Section */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 w-full max-w-4xl mt-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Find Your Perfect Trip</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Where to?"
-                    className="pl-10 h-12 text-gray-800"
-                  />
-                </div>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    type="date"
-                    placeholder="Check-in"
-                    className="pl-10 h-12 text-gray-800"
-                  />
-                </div>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    type="date"
-                    placeholder="Check-out"
-                    className="pl-10 h-12 text-gray-800"
-                  />
-                </div>
-                <Button className="h-12 bg-gradient-to-r from-primary to-accent hover:shadow-lg">
-                  <Search className="w-5 h-5 mr-2" />
-                  Search
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+    {/* Background Image 1 (The default image, visible first) */}
+    <div
+        className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
+        style={{
+            backgroundImage: "url('/assets/img/bg/img1.jpg')"
+        }}
+    />
+
+    {/* Background Image 2 (The hover image, opacity: 0 by default) */}
+    <div
+        className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+        style={{
+            backgroundImage: "url('/assets/img/bg/img2.jpg')"
+        }}
+    />
+
+    {/* Dark Overlay - z-10 ensures it is above the images */}
+    <div className="absolute inset-0 bg-black/40 z-10" />
+    
+    {/* Content Area - z-20 ensures it is above the overlay and images */}
+    <div className="relative z-20 flex flex-col items-center justify-center h-full text-white px-4">
+        <h1 className="text-6xl font-bold mb-4 text-center">Discover Your Next Dream Destination</h1>
+        <p className="text-xl mb-8">Curated holiday experiences to the world's most beautiful destinations</p>
+        
+        {/* Trip Search Section */}
+        <SearchBar />
+    </div>
+</section>
 
         {/* Featured Destinations - REAL DATA */}
         <section className="py-16 px-8 bg-white">
@@ -169,7 +167,7 @@ export default function HomePage() {
                 <h2 className="text-4xl font-bold">Featured Destinations</h2>
                 <p className="text-gray-600 mt-2">Handpicked locations for unforgettable experiences</p>
               </div>
-              <Link to="/explore" className="text-blue-600 hover:underline font-semibold">View All →</Link>
+              <Link to="/" className="text-primary hover:underline font-semibold">View All →</Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -188,16 +186,14 @@ export default function HomePage() {
                         alt={dest.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
-                      <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-semibold">
-                        ⭐ {dest.rating || "5.0"}
-                      </div>
+
                     </div>
                     <div className="p-6">
                       <h3 className="text-2xl font-bold mb-2">{dest.name}</h3>
                       <p className="text-gray-600 mb-4">📍 {dest.location}</p>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">From</span>
-                        <span className="text-2xl font-bold text-blue-600">${dest.price}</span>
+                        <span className="text-2xl font-bold text-primary">${dest.price}</span>
                       </div>
                     </div>
                   </Link>
@@ -207,34 +203,34 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Popular Activities - REAL DATA */}
+        {/* Popular Experiences - REAL DATA */}
         <section className="py-16 px-8 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h2 className="text-4xl font-bold">Popular Activities</h2>
+                <h2 className="text-4xl font-bold">Popular Experiences</h2>
                 <p className="text-gray-600 mt-2">Exciting experiences for every traveler</p>
               </div>
-              <Link to="/activities" className="text-blue-600 hover:underline font-semibold">View All →</Link>
+              <Link to="/experiences" className="text-primary hover:underline font-semibold">View All →</Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {activities.length === 0 ? (
-                <p className="col-span-4 text-center text-gray-500">No featured activities yet. Add some in the admin panel!</p>
+                <p className="col-span-4 text-center text-gray-500">No featured experiences yet. Add some in the admin panel!</p>
               ) : (
-                activities.slice(0, 4).map((activity: any) => (
-                  <Link key={activity.id} to={`/activity/${activity.id}`} className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+                activities.slice(0, 4).map((experience: any) => (
+                  <Link key={experience.id} to={`/activity/${experience.id}`} className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
                     <div className="h-48 overflow-hidden">
                       <img
-                        src={activity.image_url || "https://images.unsplash.com/photo-1544551763-46a013bb70d5"}
-                        alt={activity.name}
+                        src={experience.image_url || "https://images.unsplash.com/photo-1544551763-46a013bb70d5"}
+                        alt={experience.name}
                         className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                     <div className="p-4">
-                      <span className="text-xs text-gray-500 uppercase">{activity.category}</span>
-                      <h3 className="text-lg font-bold mt-1">{activity.name}</h3>
-                      <p className="text-sm text-gray-600 mt-2">⏱️ {activity.duration || "Varies"}</p>
-                      <p className="text-lg font-bold text-blue-600 mt-3">From ${activity.price}</p>
+                      <span className="text-xs text-gray-500 uppercase">{experience.category}</span>
+                      <h3 className="text-lg font-bold mt-1">{experience.name}</h3>
+                      <p className="text-sm text-gray-600 mt-2">⏱️ {experience.duration || "Varies"}</p>
+                      <p className="text-lg font-bold text-blue-600 mt-3">From ${experience.price}</p>
                     </div>
                   </Link>
                 ))
@@ -267,10 +263,7 @@ export default function HomePage() {
                       />
                     </div>
                     <div className="p-6">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold">{hotel.name}</h3>
-                        <span className="text-sm">⭐ {hotel.rating || "5.0"}</span>
-                      </div>
+                      <h3 className="text-xl font-bold mb-2">{hotel.name}</h3>
                       <p className="text-gray-600 text-sm mb-4">{hotel.description?.substring(0, 100) || 'Luxury accommodation with world-class amenities'}...</p>
                       <p className="text-sm text-gray-500">Per night</p>
                       <p className="text-2xl font-bold text-blue-600">${hotel.price}</p>
@@ -282,14 +275,51 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Travel Themes - REAL DATA */}
+        <section className="py-16 px-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-4xl font-bold">Travel Themes</h2>
+                <p className="text-gray-600 mt-2">Discover curated experiences by theme</p>
+              </div>
+              <Link to="/themes" className="text-primary hover:underline font-semibold">View All →</Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {themes.length === 0 ? (
+                <p className="col-span-4 text-center text-gray-500">No featured themes yet. Add some in the admin panel!</p>
+              ) : (
+                themes.slice(0, 4).map((theme: any) => (
+                  <Link key={theme.id} to="/themes" className="group bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+                    <div className="h-48 overflow-hidden relative">
+                      <img
+                        src={theme.image_url}
+                        alt={theme.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <h3 className="text-lg font-bold">{theme.name}</h3>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-sm text-gray-600">{theme.description?.substring(0, 80)}...</p>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
-        <section className="py-20 bg-blue-600 text-white text-center">
+        <section className="py-20 bg-[#3499C5] text-white text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-xl mb-8">Let us help you create memories that will last a lifetime</p>
-          <Link to="/contact" className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
+          <Link to="/contact" className="inline-block bg-white text-[#3499C5] px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
             Get in Touch
           </Link>
-        </section>
+</section>
       </div>
 
       <Footer />

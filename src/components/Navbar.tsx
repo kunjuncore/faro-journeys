@@ -11,9 +11,16 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-gradient-to-br from-primary to-accent p-2 rounded-lg group-hover:scale-110 transition-transform">
-              <Plane className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <div className="group">
+    <div>
+        <img 
+            src="assets/img/favicon.ico" 
+            alt="FaroHolidays" 
+            className="w-12 h-12"
+        />
+        {/* Note: If you want to change the color of the image, the image needs to be an SVG. */}
+    </div>
+</div>
             <span className="font-bold text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Faro Holidays
             </span>
@@ -28,14 +35,14 @@ const Navbar = () => {
               Hotels
             </Link>
             <Link to="/activities" className="text-foreground hover:text-primary transition-colors font-medium">
-              Activities
+              Experiences
             </Link>
             <Link to="/themes" className="text-foreground hover:text-primary transition-colors font-medium">
               Travel Themes
             </Link>
-            <Link to="/reviews" className="text-foreground hover:text-primary transition-colors font-medium">
+            {/* <Link to="/reviews" className="text-foreground hover:text-primary transition-colors font-medium">
               Reviews
-            </Link>
+            </Link> */}
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
               Contact Us
             </Link>

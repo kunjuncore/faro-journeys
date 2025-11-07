@@ -13,6 +13,7 @@ export default function Activities() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     loadActivities();
   }, []);
 

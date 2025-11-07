@@ -171,9 +171,46 @@ export async function getLeadsFromSupabase() {
   return data || [];
 }
 
-export async function updateLeadInSupabase(id: string, data: any) {
+export async function updateLeadStatusInSupabase(id: string, status: string) {
   const { data: result, error } = await supabase
     .from('leads')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return result;
+}
+
+// Travel Themes CRUD operations
+export async function createTravelThemeInSupabase(data: any) {
+  const { data: result, error } = await supabase
+    .from('travel_themes')
+    .insert([data])
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return result;
+}
+
+export async function getTravelThemesFromSupabase(filters?: { featured?: boolean }) {
+  let query = supabase.from('travel_themes').select('*');
+  
+  if (filters?.featured !== undefined) {
+    query = query.eq('featured', filters.featured);
+  }
+  
+  const { data, error } = await query.order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateTravelThemeInSupabase(id: string, data: any) {
+  const { data: result, error } = await supabase
+    .from('travel_themes')
     .update(data)
     .eq('id', id)
     .select()
@@ -181,4 +218,53 @@ export async function updateLeadInSupabase(id: string, data: any) {
   
   if (error) throw error;
   return result;
+}
+
+export async function deleteTravelThemeFromSupabase(id: string) {
+  const { error } = await supabase
+    .from('travel_themes')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  return true;
+}
+
+// Travel Theme Destinations operations
+export async function addDestinationsToTheme(themeId: string, destinationIds: string[]) {
+  const records = destinationIds.map(destId => ({
+    travel_theme_id: themeId,
+    destination_id: destId
+  }));
+  
+  const { error } = await supabase
+    .from('travel_theme_destinations')
+    .insert(records);
+  
+  if (error) throw error;
+  return true;
+}
+
+export async function removeDestinationsFromTheme(themeId: string) {
+  const { error } = await supabase
+    .from('travel_theme_destinations')
+    .delete()
+    .eq('travel_theme_id', themeId);
+  
+  if (error) throw error;
+  return true;
+}
+
+export async function getDestinationsByTheme(themeId: string) {
+  const { data, error } = await supabase
+    .from('travel_theme_destinations')
+    .select(`
+      destinations (
+        id, name, location, description, price, image_url
+      )
+    `)
+    .eq('travel_theme_id', themeId);
+  
+  if (error) throw error;
+  return data?.map(item => item.destinations) || [];
 }

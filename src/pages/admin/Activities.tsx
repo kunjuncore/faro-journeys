@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createActivityInSupabase, getActivitiesFromSupabase, updateActivityInSupabase, deleteActivityFromSupabase, getDestinationsFromSupabase } from "@/lib/supabaseOperations";
+import { uploadImage } from "@/lib/imageUpload";
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function AdminActivities() {
   const [activities, setActivities] = useState([]);
@@ -13,15 +15,18 @@ export default function AdminActivities() {
     category: "",
     description: "",
     price: 0,
-    duration: ""
+    duration: "",
+    image_url: ""
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editFormData, setEditFormData] = useState({
     name: "",
     destination_id: "",
     category: "",
     description: "",
     price: 0,
-    duration: ""
+    duration: "",
+    image_url: ""
   });
 
   useEffect(() => {
@@ -52,7 +57,7 @@ export default function AdminActivities() {
 
   async function handleCreate() {
     if (!formData.name || !formData.destination_id) {
-      alert('Name and destination are required!');
+      alert('Experience name and destination are required!');
       return;
     }
     try {
@@ -60,11 +65,11 @@ export default function AdminActivities() {
       const created = await createActivityInSupabase(formData);
       setActivities([...(activities as any), created]);
       setShowForm(false);
-      setFormData({ name: "", destination_id: "", category: "", description: "", price: 0, duration: "" });
-      alert("Activity created successfully!");
+      setFormData({ name: "", destination_id: "", category: "", description: "", price: 0, duration: "", image_url: "" });
+      alert("Experience created successfully!");
     } catch (error: any) {
       console.error('Error creating activity:', error);
-      alert('Failed to create activity: ' + error.message);
+      alert('Failed to create experience: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -76,10 +81,10 @@ export default function AdminActivities() {
       setLoading(true);
       await deleteActivityFromSupabase(id);
       setActivities((activities as any).filter((a: any) => a.id !== id));
-      alert("Activity deleted!");
+      alert("Experience deleted!");
     } catch (error: any) {
       console.error('Error deleting activity:', error);
-      alert('Failed to delete activity: ' + error.message);
+      alert('Failed to delete experience: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -99,7 +104,7 @@ export default function AdminActivities() {
 
   async function saveEdit(id: string) {
     if (!editFormData.name || !editFormData.destination_id) {
-      alert('Name and destination are required!');
+      alert('Experience name and destination are required!');
       return;
     }
     try {
@@ -107,10 +112,10 @@ export default function AdminActivities() {
       const updated = await updateActivityInSupabase(id, editFormData);
       setActivities((prev: any) => prev.map((a: any) => a.id === id ? updated : a));
       setEditingId(null);
-      alert("Activity updated!");
+      alert("Experience updated!");
     } catch (error: any) {
       console.error('Error updating activity:', error);
-      alert('Failed to update activity: ' + error.message);
+      alert('Failed to update experience: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -119,22 +124,22 @@ export default function AdminActivities() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Activities</h1>
+        <h1 className="text-3xl font-bold">Manage Experiences</h1>
         <button 
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
         >
-          {showForm ? "Cancel" : "Add New Activity"}
+          {showForm ? "Cancel" : "Add New Experience"}
         </button>
       </div>
 
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <h2 className="text-xl font-bold mb-4">Create New Activity</h2>
+          <h2 className="text-xl font-bold mb-4">Create New Experience</h2>
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Activity Name"
+              placeholder="Experience Name"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="border px-4 py-2 rounded"
@@ -171,12 +176,20 @@ export default function AdminActivities() {
               className="border px-4 py-2 rounded"
             />
 
-            <textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Description</label>
+              <RichTextEditor
+                value={formData.description}
+                onChange={(value) => setFormData({...formData, description: value})}
+                placeholder="Enter experience description..."
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Image URL"
+              value={formData.image_url}
+              onChange={(e) => setFormData({...formData, image_url: e.target.value})}
               className="border px-4 py-2 rounded col-span-2"
-              rows={3}
             />
 
           </div>
@@ -199,7 +212,7 @@ export default function AdminActivities() {
               <th className="px-6 py-3 text-left">Category</th>
               <th className="px-6 py-3 text-left">Price</th>
               <th className="px-6 py-3 text-left">Duration</th>
-
+              <th className="px-6 py-3 text-left">Image</th>
               <th className="px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
@@ -272,7 +285,11 @@ export default function AdminActivities() {
                       activity.duration
                     )}
                   </td>
-
+                  <td className="px-6 py-4">
+                    {activity.image_url && (
+                      <img src={activity.image_url} alt={activity.name} className="w-16 h-16 object-cover rounded" />
+                    )}
+                  </td>
                   <td className="px-6 py-4 flex gap-3">
                     {editingId === activity.id ? (
                       <>

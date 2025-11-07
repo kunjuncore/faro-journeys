@@ -27,7 +27,10 @@ export default function AdminLayout() {
             🏨 Hotels
           </Link>
           <Link to="/admin/activities" className="block px-6 py-3 hover:bg-gray-800">
-            🎯 Activities
+            🎯 Experiences
+          </Link>
+          <Link to="/admin/themes" className="block px-6 py-3 hover:bg-gray-800">
+            🎨 Travel Themes
           </Link>
           <Link to="/admin/bookings" className="block px-6 py-3 hover:bg-gray-800">
             📅 Bookings

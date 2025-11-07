@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,10 @@ import divingImage from "@/assets/activity-diving.jpg";
 
 const ActivityDetail = () => {
   const { id } = useParams();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const activity = {
     id: "1",
@@ -46,7 +51,7 @@ const ActivityDetail = () => {
 
         <div className="container mx-auto px-4 -mt-32 relative z-10">
           <Button asChild variant="ghost" className="mb-4 bg-background/80 backdrop-blur-sm">
-            <Link to="/explore">
+            <Link to="/activities">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Explore
             </Link>

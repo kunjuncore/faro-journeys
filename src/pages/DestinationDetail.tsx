@@ -24,6 +24,7 @@ const DestinationDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     loadDestinationData();
   }, [id]);
 
@@ -136,7 +137,7 @@ const DestinationDetail = () => {
 
         <div className="container mx-auto px-4 -mt-32 relative z-10">
           <Button asChild variant="ghost" className="mb-4 bg-background/80 backdrop-blur-sm">
-            <Link to="/explore">
+            <Link to="/destinations">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Explore
             </Link>
@@ -150,13 +151,7 @@ const DestinationDetail = () => {
                   <span className="text-lg">{destination.location}</span>
                 </div>
                 <h1 className="text-5xl font-bold mb-4">{destination.name}</h1>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 fill-accent text-accent" />
-                    <span className="font-semibold">{destination.rating}</span>
-                    <span className="text-muted-foreground">(128 reviews)</span>
-                  </div>
-                </div>
+
               </div>
 
               <div className="bg-secondary rounded-xl p-6 md:min-w-[280px]">
@@ -188,9 +183,38 @@ const DestinationDetail = () => {
               <TabsContent value="overview" className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold mb-4">About this Destination</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {destination.description || 'No description available for this destination.'}
-                  </p>
+                  <div className="text-muted-foreground leading-relaxed prose prose-gray max-w-none">
+                    {destination.description ? 
+                      destination.description.split('\n').map((line: string, index: number) => {
+                        // Handle headings
+                        if (line.startsWith('# ')) {
+                          return <h1 key={index} className="text-2xl font-bold mt-4 mb-2">{line.substring(2)}</h1>;
+                        }
+                        if (line.startsWith('## ')) {
+                          return <h2 key={index} className="text-xl font-bold mt-3 mb-2">{line.substring(3)}</h2>;
+                        }
+                        // Handle bullet points
+                        if (line.startsWith('• ')) {
+                          return <li key={index} className="ml-4">{line.substring(2)}</li>;
+                        }
+                        // Handle numbered lists
+                        if (/^\d+\. /.test(line)) {
+                          return <li key={index} className="ml-4">{line.replace(/^\d+\. /, '')}</li>;
+                        }
+                        // Handle bold and italic
+                        let formattedLine = line
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                        
+                        return line.trim() ? (
+                          <p key={index} className="mb-2" dangerouslySetInnerHTML={{ __html: formattedLine }} />
+                        ) : (
+                          <br key={index} />
+                        );
+                      }) : 
+                      'No description available for this destination.'
+                    }
+                  </div>
                 </div>
               </TabsContent>
 

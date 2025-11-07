@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDestinations, getHotels, getActivities, getBookings, getContacts } from "@/lib/codewords";
+import { getDestinationsFromSupabase, getHotelsFromSupabase, getActivitiesFromSupabase, getLeadsFromSupabase } from "@/lib/supabaseOperations";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -13,21 +13,25 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function loadStats() {
-      const [dest, hotels, activities, bookings, contacts] = await Promise.all([
-        getDestinations({}),
-        getHotels({}),
-        getActivities({}),
-        getBookings({}),
-        getContacts({})
-      ]);
-      setStats({
-        destinations: dest.length,
-        hotels: hotels.length,
-        activities: activities.length,
-        bookings: bookings.length,
-        leads: contacts.length
-      });
-      setLoading(false);
+      try {
+        const [dest, hotels, activities, leads] = await Promise.all([
+          getDestinationsFromSupabase(),
+          getHotelsFromSupabase(),
+          getActivitiesFromSupabase(),
+          getLeadsFromSupabase()
+        ]);
+        setStats({
+          destinations: dest.length,
+          hotels: hotels.length,
+          activities: activities.length,
+          bookings: 0,
+          leads: leads.length
+        });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadStats();
   }, []);

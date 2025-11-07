@@ -31,10 +31,7 @@ const DestinationCard = ({ destination }: DestinationCardProps) => {
             alt={destination.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
-          <div className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
-            <Star className="w-4 h-4 fill-accent text-accent" />
-            <span className="text-sm font-semibold">{destination.rating || 5.0}</span>
-          </div>
+
         </div>
         
         <div className="p-6">

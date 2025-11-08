@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { createDestinationInSupabase, getDestinationsFromSupabase, updateDestinationInSupabase, deleteDestinationFromSupabase } from "@/lib/supabaseOperations";
-import { uploadImage } from "@/lib/imageUpload";
 import RichTextEditor from "@/components/RichTextEditor";
+import ImageUploader from "@/components/ImageUploader";
 import '@/styles/quill.css';
-// Storage bucket should be configured manually in Supabase dashboard
 
 export default function AdminDestinations() {
   const [destinations, setDestinations] = useState([]);
@@ -20,9 +19,7 @@ export default function AdminDestinations() {
     image_url: "",
     featured: false
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [editImageFile, setEditImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+
   const [editFormData, setEditFormData] = useState({
     name: "",
     location: "",
@@ -96,7 +93,6 @@ export default function AdminDestinations() {
       image_url: dest.image_url || "",
       featured: !!dest.featured
     });
-    setEditImageFile(null);
   }
 
   function cancelEdit() {
@@ -166,13 +162,14 @@ export default function AdminDestinations() {
               onChange={(e) => setFormData({...formData, category: e.target.value})}
               className="border px-4 py-2 rounded"
             />
-            <input
-              type="text"
-              placeholder="Image URL"
-              value={formData.image_url}
-              onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-              className="border px-4 py-2 rounded col-span-2"
-            />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Image</label>
+              <ImageUploader
+                entity="destinations"
+                currentImageUrl={formData.image_url}
+                onImageChange={(url) => setFormData({...formData, image_url: url})}
+              />
+            </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-2">Description</label>
               <RichTextEditor
@@ -265,13 +262,13 @@ export default function AdminDestinations() {
                 </td>
                 <td className="px-6 py-4">
                   {editingId === dest.id ? (
-                    <input
-                      type="text"
-                      placeholder="Image URL"
-                      value={editFormData.image_url}
-                      onChange={(e) => setEditFormData({ ...editFormData, image_url: e.target.value })}
-                      className="border px-2 py-1 rounded w-full text-xs"
-                    />
+                    <div className="w-48">
+                      <ImageUploader
+                        entity="destinations"
+                        currentImageUrl={editFormData.image_url}
+                        onImageChange={(url) => setEditFormData({ ...editFormData, image_url: url })}
+                      />
+                    </div>
                   ) : (
                     dest.image_url && (
                       <img src={dest.image_url} alt={dest.name} className="w-16 h-16 object-cover rounded" />

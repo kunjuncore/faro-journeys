@@ -4,8 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RichTextEditor from "@/components/RichTextEditor";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function AdminTravelThemes() {
   const [themes, setThemes] = useState([]);
@@ -208,11 +207,14 @@ export default function AdminTravelThemes() {
                 placeholder="Enter theme description..."
               />
             </div>
-            <Input
-              placeholder="Image URL"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2">Image</label>
+              <ImageUploader
+                entity="travel_themes"
+                currentImageUrl={formData.image_url}
+                onImageChange={(url) => setFormData({ ...formData, image_url: url })}
+              />
+            </div>
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"

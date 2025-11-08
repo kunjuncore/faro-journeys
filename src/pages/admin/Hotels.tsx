@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createHotelInSupabase, getHotelsFromSupabase, updateHotelInSupabase, deleteHotelFromSupabase, getDestinationsFromSupabase } from "@/lib/supabaseOperations";
-import { uploadImage } from "@/lib/imageUpload";
 import RichTextEditor from "@/components/RichTextEditor";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function AdminHotels() {
   const [hotels, setHotels] = useState([]);
@@ -16,7 +16,7 @@ export default function AdminHotels() {
     price: 0,
     image_url: ""
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const [editFormData, setEditFormData] = useState({
     name: "",
     destination_id: "",
@@ -156,13 +156,14 @@ export default function AdminHotels() {
               onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
               className="border px-4 py-2 rounded"
             />
-            <input
-              type="text"
-              placeholder="Image URL"
-              value={formData.image_url}
-              onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-              className="border px-4 py-2 rounded col-span-2"
-            />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Image</label>
+              <ImageUploader
+                entity="hotels"
+                currentImageUrl={formData.image_url}
+                onImageChange={(url) => setFormData({...formData, image_url: url})}
+              />
+            </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-2">Description</label>
               <RichTextEditor

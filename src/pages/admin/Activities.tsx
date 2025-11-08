@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createActivityInSupabase, getActivitiesFromSupabase, updateActivityInSupabase, deleteActivityFromSupabase, getDestinationsFromSupabase } from "@/lib/supabaseOperations";
-import { uploadImage } from "@/lib/imageUpload";
 import RichTextEditor from "@/components/RichTextEditor";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function AdminActivities() {
   const [activities, setActivities] = useState([]);
@@ -18,7 +18,7 @@ export default function AdminActivities() {
     duration: "",
     image_url: ""
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const [editFormData, setEditFormData] = useState({
     name: "",
     destination_id: "",
@@ -184,13 +184,14 @@ export default function AdminActivities() {
                 placeholder="Enter experience description..."
               />
             </div>
-            <input
-              type="text"
-              placeholder="Image URL"
-              value={formData.image_url}
-              onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-              className="border px-4 py-2 rounded col-span-2"
-            />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">Image</label>
+              <ImageUploader
+                entity="activities"
+                currentImageUrl={formData.image_url}
+                onImageChange={(url) => setFormData({...formData, image_url: url})}
+              />
+            </div>
 
           </div>
           <button
